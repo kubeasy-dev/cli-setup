@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubeasy-dev/cli-setup.git
-    targetRevision: HEAD
+    targetRevision: main
     path: apps
   syncPolicy:
     automated:
