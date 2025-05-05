@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: challenge-operator
+  namespace: argocd
+spec:
+  destination:
+    name: in-cluster
+    namespace: challenge-operator
+  project: default
+  source:
+    repoURL: https://github.com/kubeasy-dev/cli-setup.git
+    targetRevision: HEAD
+    path: operator
+    directory:
+      include: operator.yaml
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
