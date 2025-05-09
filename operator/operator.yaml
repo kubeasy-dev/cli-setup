@@ -1,0 +1,475 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+    control-plane: controller-manager
+  name: challenge-operator-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  name: staticvalidations.challenge.kubeasy.dev
+spec:
+  group: challenge.kubeasy.dev
+  names:
+    kind: StaticValidation
+    listKind: StaticValidationList
+    plural: staticvalidations
+    singular: staticvalidation
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: StaticValidation is the Schema for the staticvalidations API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: StaticValidationSpec defines the desired state of StaticValidation
+            properties:
+              rulesConfigMap:
+                description: RulesConfigMap references the ConfigMap containing Rego
+                  rules
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              target:
+                description: Target defines the selector for Kubernetes resources
+                  to validate
+                properties:
+                  apiVersion:
+                    type: string
+                  kind:
+                    type: string
+                  labelSelector:
+                    description: |-
+                      A label selector is a label query over a set of resources. The result of matchLabels and
+                      matchExpressions are ANDed. An empty label selector matches all objects. A null
+                      label selector matches no objects.
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: |-
+                            A label selector requirement is a selector that contains values, a key, and an operator that
+                            relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: |-
+                                operator represents a key's relationship to a set of values.
+                                Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: |-
+                                values is an array of string values. If the operator is In or NotIn,
+                                the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                          map is equivalent to an element of matchExpressions, whose key field is "key", the
+                          operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  name:
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                type: object
+            required:
+            - rulesConfigMap
+            - target
+            type: object
+          status:
+            description: |-
+              StaticValidationStatus defines the observed state of StaticValidation
+              AllPassed is true if all rules passed for all targets
+            properties:
+              allPassed:
+                description: AllPassed is true if all rules passed for all targets
+                type: boolean
+              error:
+                description: Error contains a message if the last validation failed
+                  or was incomplete
+                type: string
+              lastChecked:
+                description: LastChecked is the timestamp of the last validation
+                format: date-time
+                type: string
+              resources:
+                description: Resources lists all resources found by the selector and
+                  their validation results
+                items:
+                  description: StaticValidationResourceResult holds results for a
+                    single resource
+                  properties:
+                    ruleResults:
+                      description: RuleResults contains the result for each rule
+                      items:
+                        description: StaticValidationRuleResult stores the result
+                          of a single rule validation
+                        properties:
+                          message:
+                            type: string
+                          rule:
+                            type: string
+                          status:
+                            type: string
+                        required:
+                        - rule
+                        - status
+                        type: object
+                      type: array
+                    target:
+                      description: Target identifies the resource
+                      properties:
+                        apiVersion:
+                          type: string
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                      required:
+                      - apiVersion
+                      - kind
+                      - name
+                      type: object
+                  required:
+                  - ruleResults
+                  - target
+                  type: object
+                type: array
+            required:
+            - allPassed
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-controller-manager
+  namespace: challenge-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-leader-election-role
+  namespace: challenge-operator-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: challenge-operator-manager-role
+rules:
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: challenge-operator-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: challenge-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-staticvalidation-editor-role
+rules:
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-staticvalidation-viewer-role
+rules:
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - challenge.kubeasy.dev
+  resources:
+  - staticvalidations/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-leader-election-rolebinding
+  namespace: challenge-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: challenge-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: challenge-operator-controller-manager
+  namespace: challenge-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+  name: challenge-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: challenge-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: challenge-operator-controller-manager
+  namespace: challenge-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: challenge-operator-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: challenge-operator-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: challenge-operator-controller-manager
+  namespace: challenge-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+    control-plane: controller-manager
+  name: challenge-operator-controller-manager-metrics-service
+  namespace: challenge-operator-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: challenge-operator
+    control-plane: controller-manager
+  name: challenge-operator-controller-manager
+  namespace: challenge-operator-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        image: ghcr.io/kubeasy-dev/challenge-operator@sha256:e759258f1a29192802b745edbd6ec884951450030f77ccba4664e33de0866259
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: challenge-operator-controller-manager
+      terminationGracePeriodSeconds: 10
