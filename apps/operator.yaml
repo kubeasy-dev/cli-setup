@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: challenge-operator
+  name: kubeasy-challenge-operator
   namespace: argocd
 spec:
   destination:
