@@ -3,11 +3,13 @@ kind: Application
 metadata:
   name: argocd
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   destination:
     name: in-cluster
     namespace: argocd
-  project: default
+  project: kubeasy
   source:
     repoURL: https://github.com/argoproj/argo-cd.git
     targetRevision: stable

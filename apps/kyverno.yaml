@@ -3,11 +3,13 @@ kind: Application
 metadata:
   name: kyverno
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   destination:
     name: in-cluster
     namespace: kyverno
-  project: default
+  project: kubeasy
   source:
     repoURL: https://kyverno.github.io/kyverno
     targetRevision: x
