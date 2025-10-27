@@ -3,11 +3,13 @@ kind: Application
 metadata:
   name: kubeasy-challenge-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   destination:
     name: in-cluster
     namespace: challenge-operator-system
-  project: default
+  project: kubeasy
   source:
     repoURL: https://github.com/kubeasy-dev/cli-setup.git
     targetRevision: HEAD

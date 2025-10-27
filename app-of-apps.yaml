@@ -7,7 +7,7 @@ spec:
   destination:
     name: in-cluster
     namespace: argocd
-  project: default
+  project: kubeasy
   source:
     repoURL: https://github.com/kubeasy-dev/cli-setup.git
     targetRevision: main
