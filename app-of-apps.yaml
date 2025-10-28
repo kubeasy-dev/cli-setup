@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/kubeasy-dev/cli-setup.git
-    targetRevision: main
+    targetRevision: feat/add-kubeasy-argocd-project
     path: apps
   syncPolicy:
     automated:
