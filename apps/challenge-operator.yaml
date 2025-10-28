@@ -7,7 +7,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   destination:
-    server: https://kubernetes.default.svc
+    # removed server for ArgoCD Core
     namespace: challenge-operator-system
   project: default
   source:
