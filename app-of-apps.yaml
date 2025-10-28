@@ -5,11 +5,12 @@ metadata:
   namespace: argocd
 spec:
   destination:
+    name: in-cluster
     namespace: argocd
   project: default
   source:
     repoURL: https://github.com/kubeasy-dev/cli-setup.git
-    targetRevision: feat/add-kubeasy-argocd-project
+    targetRevision: main
     path: apps
   syncPolicy:
     automated:
