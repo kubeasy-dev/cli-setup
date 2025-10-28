@@ -7,9 +7,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   destination:
-    name: in-cluster
+    server: https://kubernetes.default.svc
     namespace: kyverno
-  project: kubeasy
+  project: default
   source:
     repoURL: https://kyverno.github.io/kyverno
     targetRevision: x
